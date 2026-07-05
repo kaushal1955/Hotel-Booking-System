@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://hotel-booking-system-bxht.onrender.com/api/:path*"
+      "destination": "https://hotel-booking-system-1-tn22.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
