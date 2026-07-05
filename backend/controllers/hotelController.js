@@ -1,8 +1,7 @@
 const Hotel = require("../models/Hotel");
 const Room = require("../models/Room");
 const Review = require("../models/Review");
-const fs = require("fs");
-const path = require("path");
+const cloudinary = require("cloudinary").v2;
 
 // @desc    Upload hotel images
 exports.uploadHotelImages = async (req, res, next) => {
@@ -29,8 +28,8 @@ exports.uploadHotelImages = async (req, res, next) => {
     }
 
     const newImages = req.files.map((file) => ({
-      public_id: file.filename,
-      url: `/uploads/${file.filename}`,
+      public_id: file.filename, // Cloudinary public_id
+      url: file.path, // Cloudinary secure_url (absolute HTTPS link)
     }));
 
     hotel.images.push(...newImages);
@@ -69,11 +68,11 @@ exports.deleteHotelImage = async (req, res, next) => {
     }
 
     if (image.public_id) {
-      const filePath = path.join(__dirname, "../uploads", image.public_id);
-      fs.unlink(filePath, (err) => {
-        if (err && err.code !== "ENOENT")
-          console.error("Could not remove hotel image file:", err);
-      });
+      try {
+        await cloudinary.uploader.destroy(image.public_id);
+      } catch (err) {
+        console.error("Could not remove hotel image from Cloudinary:", err);
+      }
     }
 
     hotel.images = hotel.images.filter(

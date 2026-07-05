@@ -1,8 +1,7 @@
 const crypto = require('crypto');
 const User = require('../models/User');
 const sendEmail = require('../utils/emailService');
-const fs = require("fs"); 
-const path = require("path");
+const cloudinary = require('cloudinary').v2;
 // Generate token and set cookie
 const sendTokenResponse = (user, statusCode, res) => {
   const token = user.getSignedJwtToken();
@@ -146,16 +145,19 @@ exports.uploadProfileImage = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please select an image to upload' });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).select('+profileImagePublicId');
 
-    if (user.profileImage && user.profileImage.startsWith('/uploads/')) {
-      const oldPath = path.join(__dirname, '../uploads', path.basename(user.profileImage));
-      fs.unlink(oldPath, (err) => {
-        if (err && err.code !== 'ENOENT') console.error('Could not remove old profile image:', err);
-      });
+    // Remove the old profile image from Cloudinary, if one exists
+    if (user.profileImagePublicId) {
+      try {
+        await cloudinary.uploader.destroy(user.profileImagePublicId);
+      } catch (err) {
+        console.error('Could not remove old profile image from Cloudinary:', err);
+      }
     }
 
-    user.profileImage = `/uploads/${req.file.filename}`;
+    user.profileImage = req.file.path; // Cloudinary secure_url
+    user.profileImagePublicId = req.file.filename; // Cloudinary public_id
     await user.save({ validateBeforeSave: false });
 
     res.status(200).json({ success: true, data: user });

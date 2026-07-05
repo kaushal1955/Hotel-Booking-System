@@ -6,6 +6,10 @@ const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const errorHandler = require('./middleware/errorHandler');
+const cloudinaryConfig = require('./config/cloudinary');
+
+// Initialize Cloudinary (reads CLOUDINARY_* vars from .env)
+cloudinaryConfig();
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
